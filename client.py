@@ -11,7 +11,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.sendall(str.encode(name))
     while True:
         recv = s.recv(1024)
-        command = recv.decode("utf-8").split()
+        command = recv.decode("utf-8").split(" ")
         try:
             if command[0] == "inqueue":
                 print("Successfully connected. Currently in queue, position: {}".format(command[1]))
@@ -30,13 +30,23 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     print("{} currently has {} cards in their deck".format(command[i + 3], command[i]))
                 while True:
                     your_play = input("It is your turn! Enter your current play: ")
+                    s.sendall(str.encode(your_play))
                     recv = s.recv(1024)
                     command = recv.decode("utf-8")
                     if command == "playgood":
                         print("Your play was accepted")
+                        new_deck = s.recv(1024).decode("utf-8").split(" ")
+                        print("Your new deck is {}".format(str(new_deck)))
                         break
                     else:
                         print("Your play was rejected")
+            elif command[0] == "informplay":
+                if command[1] == "none":
+                    print("All players passed, new round has started")
+                elif command[1] == "win":
+                    print("{} has won the game!".format(command[3 + i]))
+                else:
+                    print("The new play is {}".format(str(command[1:])))
         except:
             pass
         time.sleep(0.5)
