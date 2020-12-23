@@ -44,6 +44,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 if command[1] == "none":
                     print("All players passed, new round has started")
                 elif command[1] == "win":
+                    i = int(command[2])
                     print("{} has won the game!".format(command[3 + i]))
                 else:
                     print("The new play is {}".format(str(command[1:])))
