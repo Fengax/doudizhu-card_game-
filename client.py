@@ -32,14 +32,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     your_play = input("It is your turn! Enter your current play: ")
                     s.sendall(str.encode(your_play))
                     recv = s.recv(1024)
-                    command = recv.decode("utf-8")
-                    if command == "playgood":
+                    command = recv.decode("utf-8").split()
+                    if command[0] == "playgood":
                         print("Your play was accepted")
                         new_deck = s.recv(1024).decode("utf-8").split(" ")
                         print("Your new deck is {}".format(str(new_deck)))
                         break
                     else:
-                        print("Your play was rejected")
+                        print(" ".join(command[1:]))
             elif command[0] == "informplay":
                 if command[1] == "none":
                     print("All players passed, new round has started")
