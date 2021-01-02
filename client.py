@@ -28,6 +28,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             elif command[0] == "urturn":
                 for i in range(1, 4):
                     print("{} currently has {} cards in their deck".format(command[i + 3], command[i]))
+                recv = s.recv(1024)
+                print(recv.decode("utf-8"))
                 while True:
                     your_play = input("It is your turn! Enter your current play: ")
                     s.sendall(str.encode(your_play))

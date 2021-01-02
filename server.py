@@ -4,6 +4,68 @@ import time
 import random
 import itertools
 
+def checkConsecutive(array):
+    array_diff = []
+    for i in range(1, len(array)):
+        array_diff.append(deck_index.index(array[i]) - deck_index.index(array[i - 1]))
+    if max(array_diff) == min(array_diff) == 1:
+        return True
+    else:
+        return False
+
+def checkPlane(array):
+    plane = []
+    temp = []
+    for i in range(0, len(array) + 1):
+        if i == 0:
+            prev = array[i]
+            temp.append(deck_index.index(array[i]))
+        elif i == len(array):
+            plane.append(temp)
+        else:
+            if array[i] == prev:
+                temp.append(deck_index.index(array[i]))
+            else:
+                plane.append(temp)
+                temp = [deck_index.index(array[i])]
+                prev = array[i]
+
+    bodyCount = 0
+    wingCount = 0
+    wingLength = "null"
+    prev = "null"
+
+    for i in plane:
+        if len(i) == 3:
+            bodyCount += 1
+            if max(i) == min(i):
+                if prev == "null":
+                    prev = max(i)
+                else:
+                    if min(i) - prev == 1:
+                        prev = max(i)
+                    else:
+                        return False
+            else:
+                return False
+        else:
+            wingCount += 1
+            if wingLength == "null":
+                wingLength = len(i)
+            elif wingLength == len(i):
+                pass
+            else:
+                return False
+            if max(i) == min(i):
+                pass
+            else:
+                return False
+
+    if wingCount == bodyCount:
+        return bodyCount
+    else:
+        return False
+
 def isValid(card, current_deck):
     global prev_card
     #If previous card is none (start of new round), a pass-play is disallowed
@@ -13,17 +75,7 @@ def isValid(card, current_deck):
         else:
             return True
     #Checking if the deck has all the cards in the play
-    temp_index = []
-    last_searched_index = -1
-    for i in card:
-        if (last_searched_index + 1) >= len(current_deck):
-            break
-        for z in range(last_searched_index + 1, len(current_deck)):
-            if i == current_deck[z]:
-                temp_index.append(z)
-                last_searched_index = z
-                break
-    if len(card) == len(temp_index):
+    if all(elem in current_deck for elem in card):
         pass
     else:
         return "Not all cards of the current play is contained in the deck"
@@ -32,11 +84,140 @@ def isValid(card, current_deck):
         #If previous card is none, any one-card plays are allowed
         if prev_card == ["none"]:
             return True
-        #Otherwise, this play must be bigger than the previous play
-        if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
-            return True
+        #Check if previous play is also a 1 card play
+        elif len(card) == len(prev_card):
+            # Otherwise, this play must be bigger than the previous play
+            if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                return True
+            else:
+                return "The current play does not beat the previous play"
         else:
-            return "The current play does not beat the previous play"
+            return "The previous play is not a 1 card play, not allowed"
+    #Two-card plays
+    elif len(card) == 2:
+        if prev_card == ["none"]:
+            return True
+        elif (card[0] == "small_joker" and card[1] == "big_joker") or (card[1] == "small_joker" and card[0] == "big_joker"):
+            return True
+        elif len(card) == len(prev_card):
+            if card[0] == card[1]:
+                if deck_index.index(card[0]) > deck_index.index(prev_card[1]):
+                    return True
+                else:
+                    return "The current play does not beat the previous play"
+            else:
+                return "Invalid 2 card play. Cards do not match"
+        else:
+            return "The previous play is not a 2 card play, not allowed."
+
+    #Three-card plays
+    elif len(card) == 3:
+        if prev_card == ["none"]:
+            return True
+        elif len(card) == len(prev_card):
+            if card[0] == card[1] == card[2]:
+                if deck_index.index(card[0]) > deck_index.index(prev_card[1]):
+                    return True
+                else:
+                    return "The current play does not beat the previous play"
+            else:
+                return "Invalid 3 card play. Cards do not match"
+        else:
+            return "The previous play is not a 3 card play, not allowed."
+    #Four-card plays
+    elif len(card) == 4:
+        #Check if the play is a bomb
+        if card[0] == card[1] == card[2] == card[3]:
+            if prev_card == ["none"]:
+                return True
+            #If previous play is a king-bomb
+            elif ((prev_card[0] == "small_joker" and prev_card[1] == "big_joker") or (prev_card[1] == "small_joker" and prev_card[0] == "big_joker")) and len(prev_card) == 2:
+                return "The current play does not beat the previous play"
+            # If previous play is also a bomb
+            elif len(prev_card) == 4 and (prev_card[0] == prev_card[1] == prev_card[2] == prev_card[3]):
+                if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                    return True
+                else:
+                    return "The current play does not beat the previous play"
+            else:
+                return True
+        #Check if the play is a "3 hook 1"
+        elif (card[0] == card[1] == card[2]) or (card[1] == card[2] == card[3]):
+            if prev_card == ["none"]:
+                return True
+            elif (prev_card[0] == prev_card[1] == prev_card[2]) or (prev_card[1] == prev_card[2] == prev_card[3]):
+                if deck_index.index(card[1]) > deck_index.index(prev_card[1]):
+                    return True
+                else:
+                    return "The current play does not beat the previous play"
+            else:
+                return "The previous play is not a 3 hook 1 play, not allowed"
+        else:
+            return "The current 4 card play is not recognized"
+    elif len(card) == 5:
+        # Check if the play is a "3 hook 2"
+        if card[0] == card[1] == card[2]:
+            if prev_card == ["none"]:
+                return True
+            elif len(card) == len(prev_card):
+                if prev_card[0] == prev_card[1] == prev_card[2]:
+                    if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                        return True
+                    else:
+                        return "The current play does not beat the previous play"
+                else:
+                    return "Previous play is not a 3 hook 2 play, not allowed"
+            else:
+                return "The previous play is not a 5 card play, not allowed"
+        #Check if the play is a 5-consecutive
+        elif checkConsecutive(card):
+            if card[-1] in ("small_joker", "big_joker", "2"):
+                return "The consecutive play extends too far, biggest card allowed is A"
+            elif prev_card == ["none"]:
+                return True
+            elif len(card) == len(prev_card):
+                if checkConsecutive(prev_card):
+                    if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                        return True
+                    else:
+                        return "The current play does not beat the previous play"
+                else:
+                    return "Previous play is not a 5-consecutive, not allowed"
+            else:
+                return "The previous play is not a 5 card play, not allowed"
+    else:
+        #Check if the play is any consecutive play
+        if checkConsecutive(card):
+            #Check if consecutive play is within limits
+            if card[-1] in ("small_joker", "big_joker", "2"):
+                return "The consecutive play extends too far, biggest card allowed is A"
+            elif prev_card == ["none"]:
+                return True
+            elif len(card) == len(prev_card):
+                #Check if previous play is also a consecutive play
+                if checkConsecutive(prev_card):
+                    if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                        return True
+                    else:
+                        return "The current play does not beat the previous play"
+                else:
+                    return "Previous play is not a consecutive play, not allowed"
+            else:
+                return "The previous play is not of the same length, not allowed"
+        #Check if the play is any plane play
+        elif checkPlane(card):
+            if prev_card == ["none"]:
+                return True
+            elif checkPlane(prev_card) == checkPlane(card):
+                if deck_index.index(card[0]) > deck_index.index(prev_card[0]):
+                    return True
+                else:
+                    return "The current play does not beat the previous play"
+            else:
+                return "Previous play is not the same plane play, not allowed"
+        else:
+            return "Play not recognized"
+
 
 def player(socket_handle, player_num, lock):
     global thread_lock
@@ -96,6 +277,8 @@ def player(socket_handle, player_num, lock):
                 #If this player is the current player
                 if player_num == current_player:
                     socket_handle.sendall(str.encode("urturn {} {}".format(" ".join(deck_info), " ".join(player_names))))
+                    time.sleep(0.1)
+                    socket_handle.sendall(str.encode(str(deck)))
                     #Wait for a play from the client-side
                     while True:
                         recv = socket_handle.recv(1024)
@@ -114,16 +297,9 @@ def player(socket_handle, player_num, lock):
                                 with lock:
                                     prev_card = played_card
                                 #Remove play from the player's deck
-                                temp_index = []
-                                last_searched_index = -1
-                                for i in played_card:
-                                    for z in range(last_searched_index + 1, len(deck)):
-                                        if i == deck[z]:
-                                            temp_index.append(z)
-                                            last_searched_index = z
-                                            break
-                                for i in temp_index:
-                                    deck.pop(i)
+                                with lock:
+                                    for i in played_card:
+                                        deck.remove(i)
                             #Send new deck and check if player's deck length is 0 (has won the game)
                             socket_handle.sendall(str.encode(" ".join(deck)))
                             time.sleep(0.1)
@@ -238,6 +414,7 @@ while True:
                    pass_play = 0
                    prev_card = ["none"]
             elif round_winner > -1:
+                time.sleep(1)
                 print("{} has won the game!".format(player_names[round_winner]))
                 with lock:
                     prev_card = ["win", str(curr_player)] + player_names
